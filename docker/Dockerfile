@@ -32,7 +32,7 @@ RUN /bin/bash -c "mkdir -p ws_moveit/src && cd ws_moveit/src && \
     git clone https://github.com/stooppas/moveit_msgs -b ros2 && \
     vcs import < moveit2/moveit2.repos && \
     rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y && \
-    cd .. && source /opt/ros/humble/setup.bash && \
+    cd .. && \
     colcon build --event-handlers desktop_notification- status- --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release"
 
 CMD ["sleep", "90d"]
