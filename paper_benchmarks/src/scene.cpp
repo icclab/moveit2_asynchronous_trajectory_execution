@@ -14,30 +14,35 @@ Scene::Scene(rclcpp::Node::SharedPtr node){
 
 void Scene::create_random_scene()
 {
-  moveit_msgs::msg::PlanningScene planning_scene;
-  planning_scene.is_diff = true;
+  auto planning_interface = new moveit::planning_interface::PlanningSceneInterface();
+
+  srand(time(0));
+  
+  std::vector<moveit_msgs::msg::CollisionObject> collision_objects;
+  std::vector<moveit_msgs::msg::ObjectColor> object_colors;
+
   int counter = 1;
-  float min_x = -0.45;
-  float max_x = 0.45;
-  float min_y = 0.35;
-  float max_y = -0.35;
-  while(counter < 30){
+  float min_x = -0.35;
+  float max_x = 0.35;
+  float min_y = 0.25;
+  float max_y = -0.25;
+  while(counter < 20){
       moveit_msgs::msg::CollisionObject object;
-      object.header.frame_id = "world";
+      object.header.frame_id = "base";
       object.id = "box_" + std::to_string(counter);
 
       /* A default pose */
       geometry_msgs::msg::Pose pose;
       pose.position.x = min_x + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max_x-min_x)));
       pose.position.y = min_y + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max_y-min_y)));
-      pose.position.z = 1.025;
+      pose.position.z = 1.026;
       pose.orientation.z = static_cast <float> (rand()) /( static_cast <float> (RAND_MAX));;
       
       bool isColliding = false;
 
-      for(auto object : planning_scene.world.collision_objects){
+      for(auto object : collision_objects){
         double len = sqrt(pow(pose.position.x - object.primitive_poses[0].position.x,2) + pow(pose.position.y - object.primitive_poses[0].position.y,2));
-        if(len < 0.08)
+        if(len < 0.1)
         {
           isColliding = true;
           break;
@@ -55,11 +60,27 @@ void Scene::create_random_scene()
       primitive.dimensions[1] = 0.05;
       primitive.dimensions[2] = 0.05;
 
+      moveit_msgs::msg::ObjectColor color;
+      color.id = object.id;
+
+      if(counter%2){
+        color.color.r = 1;
+        color.color.g = 0;
+        color.color.b = 0;
+        color.color.a = 1;
+      }else{
+        color.color.r = 0;
+        color.color.g = 0;
+        color.color.b = 1;
+        color.color.a = 1;
+      }
+
       object.primitives.push_back(primitive);
       object.primitive_poses.push_back(pose);
-      planning_scene.world.collision_objects.push_back(object);
+      collision_objects.push_back(object);
+      object_colors.push_back(color);
   }
-  planning_scene_diff_publisher->publish(planning_scene);
+  planning_interface->addCollisionObjects(collision_objects,object_colors);
 }
 
 bool Scene::attachObject(){
